@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>دفتر دارایی ثابت | رخ تجارت</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#142A33">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="دارایی ثابت">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg: #F5F4F0;
+  --panel: #FFFFFF;
+  --ink: #23282B;
+  --ink-soft: #6B7278;
+  --line: #E4E1DA;
+  --navy: #1E3A45;
+  --navy-deep: #142A33;
+  --amber: #C68A3A;
+  --amber-soft: #F3E3C8;
+  --green: #3E7A5C;
+  --green-soft: #DEEEE4;
+  --red: #B14848;
+  --red-soft: #F5DFDF;
+  --blue: #2E6B8F;
+  --blue-soft: #DCEAF2;
+  --radius: 10px;
+  font-family: 'Vazirmatn', sans-serif;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:'Vazirmatn', sans-serif;
+  min-height:100vh;
+}
+.num{ font-family:'JetBrains Mono','Vazirmatn',monospace; font-variant-numeric: tabular-nums; letter-spacing: -1px; }
+.money{ font-family:'Vazirmatn',sans-serif; font-variant-numeric: normal; letter-spacing: -0.3px; }
+
+/* ===== Header ===== */
+.topbar{
+  background: var(--navy-deep);
+  color:#F2EFE8;
+  padding: 22px 28px 60px;
+  position:relative;
+}
+.topbar-inner{
+  display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap;
+}
+.brand{ display:flex; align-items:center; gap:12px; }
+.brand-mark{
+  width:42px;height:42px;border-radius:9px;
+  background: linear-gradient(155deg, var(--amber), #a8702c);
+  display:flex;align-items:center;justify-content:center;
+  font-weight:800; font-size:16px; color:#241705; flex-shrink:0;
+}
+.brand-text input{
+  background:transparent;border:none;color:#F2EFE8;font-size:17px;font-weight:700;
+  font-family:'Vazirmatn',sans-serif; padding:2px 4px; border-radius:6px; width:230px;
+}
+.brand-text input:focus{ outline:1px solid rgba(255,255,255,.35); background:rgba(255,255,255,.06);}
+.brand-sub{ font-size:12px; color:#B9C3C6; margin-top:2px;}
+.header-actions{ display:flex; gap:10px; }
+.btn{
+  border:none; border-radius:8px; padding:10px 16px; font-family:'Vazirmatn',sans-serif;
+  font-size:13.5px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:6px;
+  transition: transform .12s ease, filter .12s ease;
+}
+.btn:active{ transform: scale(0.97); }
+.btn-primary{ background: var(--amber); color:#241705; }
+.btn-primary:hover{ filter:brightness(1.06); }
+.btn-ghost{ background: rgba(255,255,255,.08); color:#F2EFE8; border:1px solid rgba(255,255,255,.18); }
+.btn-ghost:hover{ background: rgba(255,255,255,.14); }
+.btn-outline{ background:transparent; border:1px solid var(--line); color:var(--ink); }
+.btn-outline:hover{ background:#F0EEE8; }
+.btn-danger-text{ background:transparent; color:var(--red); border:none; font-weight:600; cursor:pointer; font-family:'Vazirmatn',sans-serif; font-size:12.5px;}
+
+/* ===== KPI cards ===== */
+.kpis{
+  max-width:1180px; margin: -42px auto 0; padding: 0 28px;
+  display:grid; grid-template-columns:repeat(4,1fr); gap:14px; position:relative; z-index:2;
+}
+.kpi{
+  background:var(--panel); border-radius:var(--radius); padding:16px 18px;
+  box-shadow: 0 8px 24px rgba(20,42,51,.08); border:1px solid var(--line);
+}
+.kpi-label{ font-size:12px; color:var(--ink-soft); font-weight:600; margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;}
+.kpi-value{ font-size:24px; font-weight:800; color:var(--navy-deep); }
+.kpi-sub{ font-size:11.5px; color:var(--ink-soft); margin-top:4px; }
+.tag-dot{ width:8px;height:8px;border-radius:50%; display:inline-block; }
+
+/* ===== Main ===== */
+.wrap{ max-width:1180px; margin:0 auto; padding: 26px 28px 60px; }
+
+.toolbar{
+  display:flex; align-items:center; gap:10px; margin-bottom:16px; flex-wrap:wrap;
+}
+.search-box{
+  flex:1; min-width:200px; display:flex; align-items:center; gap:8px;
+  background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:9px 12px;
+}
+.search-box input{ border:none; outline:none; background:transparent; font-family:'Vazirmatn',sans-serif; font-size:13.5px; width:100%; color:var(--ink); }
+select.filter{
+  background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:9px 10px;
+  font-family:'Vazirmatn',sans-serif; font-size:13px; color:var(--ink); cursor:pointer;
+}
+
+/* ===== Table ===== */
+.table-card{
+  background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden;
+}
+table{ width:100%; border-collapse:collapse; font-size:13.5px; }
+thead th{
+  text-align:right; font-size:11.5px; color:var(--ink-soft); font-weight:700; letter-spacing:.2px;
+  padding:12px 14px; border-bottom:1px solid var(--line); background:#FAF9F6; white-space:nowrap;
+}
+tbody td{ padding:12px 14px; border-bottom:1px solid var(--line); vertical-align:middle; }
+tbody tr:last-child td{ border-bottom:none; }
+tbody tr:hover{ background:#FAFAF7; }
+
+.asset-tag{
+  display:inline-flex; align-items:center; gap:5px; font-family:'JetBrains Mono',monospace;
+  font-size:11px; font-weight:600; color:var(--navy-deep); background:#EFF4F1;
+  border:1px dashed #B9CFC5; border-radius:5px; padding:3px 7px;
+}
+.asset-name{ font-weight:700; color:var(--ink); }
+.asset-meta{ font-size:11.5px; color:var(--ink-soft); margin-top:2px; }
+.asset-meta.warranty{ color:var(--blue); }
+.asset-meta.maint{ color:var(--ink-soft); }
+.asset-meta.disposal{ color:var(--red); }
+
+.pill{
+  display:inline-block; padding:4px 10px; border-radius:20px; font-size:11.5px; font-weight:700;
+}
+.pill-ok{ background:var(--green-soft); color:var(--green); }
+.pill-warn{ background:var(--amber-soft); color:#8a5f1f; }
+.pill-bad{ background:var(--red-soft); color:var(--red); }
+.pill-neutral{ background:#ECEAE3; color:var(--ink-soft); }
+
+.cat-chip{
+  display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:600; color:var(--ink-soft);
+}
+
+.row-actions{ display:flex; gap:6px; flex-wrap:wrap; }
+.icon-btn{
+  width:30px; height:30px; border-radius:7px; border:1px solid var(--line); background:var(--panel);
+  display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--ink-soft);
+  font-size:13px;
+}
+.icon-btn:hover{ background:#F0EEE8; color:var(--ink); }
+
+.empty-state{ text-align:center; padding:60px 20px; color:var(--ink-soft); }
+.empty-state .big{ font-size:15px; font-weight:700; color:var(--ink); margin-bottom:6px; }
+
+/* ===== Modal ===== */
+.overlay{
+  position:fixed; inset:0; background:rgba(20,26,29,.5); display:none; align-items:center; justify-content:center;
+  z-index:50; padding:20px;
+}
+.overlay.open{ display:flex; }
+.modal{
+  background:var(--panel); border-radius:14px; width:100%; max-width:560px; max-height:90vh; overflow:auto;
+  padding:26px 26px 22px; box-shadow: 0 20px 60px rgba(0,0,0,.25);
+}
+.modal h2{ margin:0 0 4px; font-size:18px; color:var(--navy-deep); }
+.modal .modal-sub{ font-size:12.5px; color:var(--ink-soft); margin-bottom:18px; }
+.form-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.form-grid .full{ grid-column: 1 / -1; }
+.field label{ display:block; font-size:12px; font-weight:700; color:var(--ink-soft); margin-bottom:6px; }
+.field input, .field select, .field textarea{
+  width:100%; border:1px solid var(--line); border-radius:8px; padding:9px 11px; font-family:'Vazirmatn',sans-serif;
+  font-size:13.5px; color:var(--ink); background:#FDFDFC;
+}
+.field input:focus, .field select:focus, .field textarea:focus{ outline:2px solid #CFE0DB; border-color:var(--navy); }
+.field textarea{ resize:vertical; min-height:60px; }
+.modal-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:20px; }
+
+.hint{ font-size:11px; color:var(--ink-soft); margin-top:14px; padding:10px 12px; background:#FAF9F6; border-radius:8px; border:1px solid var(--line); }
+
+/* ===== Jalali date picker ===== */
+.jdate-row{ display:flex; gap:6px; }
+.jdate-select{
+  flex:1; border:1px solid var(--line); border-radius:8px; padding:9px 6px; font-family:'Vazirmatn',sans-serif;
+  font-size:13px; color:var(--ink); background:#FDFDFC; text-align:center;
+}
+.jdate-select:focus{ outline:2px solid #CFE0DB; border-color:var(--navy); }
+
+/* ===== Maintenance list ===== */
+.maint-item{
+  border:1px solid var(--line); border-radius:8px; padding:10px 12px; display:flex; justify-content:space-between; gap:10px; align-items:flex-start;
+}
+.maint-item .maint-date{ font-size:11.5px; color:var(--ink-soft); font-family:'JetBrains Mono','Vazirmatn',monospace; }
+.maint-item .maint-desc{ font-size:13px; margin-top:2px; }
+.maint-item .maint-meta{ font-size:11.5px; color:var(--ink-soft); margin-top:4px; }
+
+@media (max-width: 720px){
+  .kpis{ grid-template-columns:1fr 1fr; margin-top:-30px;}
+  .form-grid{ grid-template-columns:1fr; }
+  table{ font-size:12.5px; }
+  thead th:nth-child(4), tbody td:nth-child(4){ display:none; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="brand-mark">رت</div>
+      <div class="brand-text">
+        <input id="companyName" value="رخ تجارت" spellcheck="false">
+        <div class="brand-sub">دفتر ثبت دارایی‌های ثابت</div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-ghost" id="installBtn" style="display:none;">📲 نصب اپ</button>
+      <button class="btn btn-ghost" id="backupBtn">⬇ دانلود بک‌آپ</button>
+      <button class="btn btn-ghost" id="restoreBtn">⬆ بازیابی بک‌آپ</button>
+      <input type="file" id="restoreFileInput" accept="application/json" style="display:none;">
+      <button class="btn btn-ghost" id="exportBtn">خروجی CSV</button>
+      <button class="btn btn-primary" id="addBtn">+ ثبت دارایی جدید</button>
+    </div>
+  </div>
+</div>
+
+<div class="kpis">
+  <div class="kpi">
+    <div class="kpi-label">تعداد دارایی‌های فعال</div>
+    <div class="kpi-value num" id="kpiCount">۰</div>
+    <div class="kpi-sub" id="kpiCountSub">هنوز چیزی ثبت نشده</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">ارزش خرید کل</div>
+    <div class="kpi-value num money" id="kpiCost">۰ تومان</div>
+    <div class="kpi-sub">مجموع بهای تمام‌شده</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">ارزش دفتری فعلی</div>
+    <div class="kpi-value num money" id="kpiBookValue">۰ تومان</div>
+    <div class="kpi-sub">پس از کسر استهلاک</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">وضعیت دارایی‌ها</div>
+    <div class="kpi-value" style="font-size:13px; display:flex; gap:10px; align-items:center; margin-top:6px;" id="kpiStatus">—</div>
+    <div class="kpi-sub" id="kpiStatusSub">سالم / نیازمند تعمیر / اسقاط</div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="toolbar">
+    <div class="search-box">
+      <span>🔍</span>
+      <input id="searchInput" placeholder="جستجو بر اساس نام، شماره اموال یا سریال...">
+    </div>
+    <select class="filter" id="filterCategory"><option value="">همه دسته‌بندی‌ها</option></select>
+    <select class="filter" id="filterStatus">
+      <option value="">همه (فعال)</option>
+      <option value="سالم">سالم</option>
+      <option value="نیازمند تعمیر">نیازمند تعمیر</option>
+      <option value="اسقاط">اسقاط</option>
+      <option value="DISPOSED">خارج‌شده‌ها</option>
+    </select>
+    <button class="btn btn-outline" id="manageCatBtn">⚙ دسته‌بندی‌ها</button>
+  </div>
+
+  <div class="table-card">
+    <table>
+      <thead>
+        <tr>
+          <th>شماره اموال</th>
+          <th>دارایی</th>
+          <th>دسته‌بندی</th>
+          <th>محل / مسئول</th>
+          <th>تاریخ خرید</th>
+          <th>قیمت خرید</th>
+          <th>ارزش دفتری</th>
+          <th>وضعیت</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+    <div class="empty-state" id="emptyState" style="display:none;">
+      <div class="big">هنوز دارایی‌ای ثبت نشده</div>
+      <div>با دکمه «ثبت دارایی جدید» اولین مورد را اضافه کنید.</div>
+    </div>
+  </div>
+
+  <div class="hint">💾 اطلاعات به‌صورت خودکار روی همین دستگاه ذخیره می‌شود و هر بار که اپ را باز کنید همین‌جا خواهد بود. این داده جایی ارسال نمی‌شود و فقط روی گوشی/مرورگر شما می‌ماند — پس حتماً هر چند وقت یک‌بار با دکمه‌ی «دانلود بک‌آپ» یک نسخه پشتیبان بگیرید و در گوگل‌درایو یا جای امن دیگری نگه دارید، چون با پاک شدن اطلاعات مرورگر یا تعویض گوشی، این داده از بین می‌رود مگر بک‌آپ داشته باشید. تمام تاریخ‌ها به تقویم شمسی نمایش داده می‌شوند.</div>
+</div>
+
+<!-- Add/Edit asset modal -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h2 id="modalTitle">ثبت دارایی جدید</h2>
+    <div class="modal-sub">اطلاعات دارایی را کامل کنید. موارد ستاره‌دار الزامی هستند.</div>
+    <div class="form-grid">
+      <div class="field full">
+        <label>نام دارایی *</label>
+        <input id="f_name" placeholder="مثلاً لپ‌تاپ Dell Latitude 5440">
+      </div>
+      <div class="field">
+        <label>دسته‌بندی *</label>
+        <select id="f_category"></select>
+      </div>
+      <div class="field">
+        <label>شماره سریال</label>
+        <input id="f_serial" placeholder="Serial Number">
+      </div>
+      <div class="field full">
+        <label>تاریخ خرید (شمسی) *</label>
+        <div class="jdate-row">
+          <select id="f_date_day" class="jdate-select"></select>
+          <select id="f_date_month" class="jdate-select"></select>
+          <select id="f_date_year" class="jdate-select"></select>
+        </div>
+      </div>
+      <div class="field">
+        <label>قیمت خرید (تومان) *</label>
+        <input id="f_cost" type="number" min="0" placeholder="۰">
+      </div>
+      <div class="field">
+        <label>عمر مفید (سال)</label>
+        <input id="f_life" type="number" min="1" placeholder="مثلاً ۵">
+      </div>
+      <div class="field">
+        <label>وضعیت</label>
+        <select id="f_status">
+          <option>سالم</option>
+          <option>نیازمند تعمیر</option>
+          <option>اسقاط</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>گارانتی</label>
+        <select id="f_hasWarranty">
+          <option value="no">ندارد</option>
+          <option value="yes">دارد</option>
+        </select>
+      </div>
+      <div class="field full" id="warrantyDateWrap" style="display:none;">
+        <label>تاریخ پایان گارانتی (شمسی)</label>
+        <div class="jdate-row">
+          <select id="f_warranty_day" class="jdate-select"></select>
+          <select id="f_warranty_month" class="jdate-select"></select>
+          <select id="f_warranty_year" class="jdate-select"></select>
+        </div>
+      </div>
+      <div class="field">
+        <label>محل استقرار</label>
+        <input id="f_location" placeholder="مثلاً طبقه ۲ - واحد فنی">
+      </div>
+      <div class="field">
+        <label>تحویل‌گیرنده / مسئول</label>
+        <input id="f_custodian" placeholder="نام کارمند">
+      </div>
+      <div class="field full">
+        <label>توضیحات</label>
+        <textarea id="f_notes" placeholder="یادداشت‌های اضافی..."></textarea>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" id="cancelBtn">انصراف</button>
+      <button class="btn btn-primary" id="saveBtn">ذخیره دارایی</button>
+    </div>
+  </div>
+</div>
+
+<!-- Categories modal -->
+<div class="overlay" id="catOverlay">
+  <div class="modal" style="max-width:440px;">
+    <h2>مدیریت دسته‌بندی‌ها</h2>
+    <div class="modal-sub">دسته‌بندی‌های دلخواه‌تان را اضافه یا حذف کنید.</div>
+
+    <div style="display:flex; gap:8px; margin-bottom:16px;">
+      <input id="newCatInput" placeholder="نام دسته‌بندی جدید..." style="flex:1; border:1px solid var(--line); border-radius:8px; padding:9px 11px; font-family:'Vazirmatn',sans-serif; font-size:13.5px;">
+      <button class="btn btn-primary" id="addCatBtn">افزودن</button>
+    </div>
+
+    <div id="catList" style="display:flex; flex-direction:column; gap:8px; max-height:320px; overflow:auto;"></div>
+
+    <div class="modal-actions">
+      <button class="btn btn-outline" id="closeCatBtn">بستن</button>
+    </div>
+  </div>
+</div>
+
+<!-- Maintenance modal -->
+<div class="overlay" id="maintOverlay">
+  <div class="modal">
+    <h2>تعمیر و نگهداری</h2>
+    <div class="modal-sub" id="maintAssetName">—</div>
+
+    <div id="maintList" style="display:flex; flex-direction:column; gap:8px; max-height:220px; overflow:auto; margin-bottom:18px;"></div>
+
+    <div style="border-top:1px solid var(--line); padding-top:16px;">
+      <div class="form-grid">
+        <div class="field full">
+          <label>تاریخ (شمسی)</label>
+          <div class="jdate-row">
+            <select id="m_date_day" class="jdate-select"></select>
+            <select id="m_date_month" class="jdate-select"></select>
+            <select id="m_date_year" class="jdate-select"></select>
+          </div>
+        </div>
+        <div class="field full">
+          <label>شرح تعمیر / سرویس *</label>
+          <textarea id="m_desc" placeholder="مثلاً تعویض باتری، سرویس دوره‌ای..."></textarea>
+        </div>
+        <div class="field">
+          <label>هزینه (تومان)</label>
+          <input id="m_cost" type="number" min="0" placeholder="۰">
+        </div>
+        <div class="field">
+          <label>انجام‌دهنده</label>
+          <input id="m_tech" placeholder="نام تکنسین/شرکت">
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" id="addMaintBtn">افزودن رکورد</button>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-outline" id="closeMaintBtn">بستن</button>
+    </div>
+  </div>
+</div>
+
+<!-- Disposal modal -->
+<div class="overlay" id="disposeOverlay">
+  <div class="modal">
+    <h2>خروج دارایی</h2>
+    <div class="modal-sub" id="disposeAssetName">—</div>
+    <div class="form-grid">
+      <div class="field full">
+        <label>تاریخ خروج (شمسی) *</label>
+        <div class="jdate-row">
+          <select id="d_date_day" class="jdate-select"></select>
+          <select id="d_date_month" class="jdate-select"></select>
+          <select id="d_date_year" class="jdate-select"></select>
+        </div>
+      </div>
+      <div class="field">
+        <label>نوع خروج</label>
+        <select id="d_type">
+          <option>فروش</option>
+          <option>اسقاط</option>
+          <option>انتقال</option>
+          <option>مفقودی</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>مبلغ دریافتی (تومان)</label>
+        <input id="d_amount" type="number" min="0" placeholder="۰">
+      </div>
+      <div class="field full">
+        <label>گیرنده / خریدار</label>
+        <input id="d_recipient" placeholder="نام شخص یا شرکت">
+      </div>
+      <div class="field full">
+        <label>توضیحات</label>
+        <textarea id="d_notes" placeholder="یادداشت‌های اضافی..."></textarea>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" id="cancelDisposeBtn">انصراف</button>
+      <button class="btn btn-primary" id="confirmDisposeBtn">تأیید خروج دارایی</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===================== Local storage engine =====================
+   Runs fully on-device (localStorage) so the app works standalone,
+   offline, and independent of any external account. */
+window.storage = {
+  async get(key){
+    const raw = localStorage.getItem('fa_' + key);
+    if(raw === null) return null;
+    return { key, value: raw, shared: false };
+  },
+  async set(key, value){
+    localStorage.setItem('fa_' + key, value);
+    return { key, value, shared: false };
+  },
+  async delete(key){
+    localStorage.removeItem('fa_' + key);
+    return { key, deleted: true, shared: false };
+  },
+  async list(prefix){
+    const p = 'fa_' + (prefix||'');
+    const keys = Object.keys(localStorage).filter(k=>k.startsWith(p)).map(k=>k.slice(3));
+    return { keys, prefix, shared: false };
+  }
+};
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('service-worker.js').catch(()=>{});
+  });
+}
+
+let deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', (e)=>{
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  const btn = document.getElementById('installBtn');
+  if(btn) btn.style.display = 'flex';
+});
+
+let assets = [];
+let categories = [];
+let nextSeq = 1;
+let editingId = null;
+let currentMaintAssetId = null;
+let currentDisposeAssetId = null;
+const STORAGE_KEY = 'fixed-assets-data';
+const NAME_KEY = 'company-name';
+const CATEGORIES_KEY = 'asset-categories';
+const DEFAULT_CATEGORIES = ['کامپیوتر و لپ‌تاپ','تجهیزات شبکه','مبلمان اداری','تجهیزات جانبی','پرینتر و اسکنر','تجهیزات صوتی و تصویری','نرم‌افزار و لایسنس','سایر'];
+const CAT_PALETTE = ['#1E3A45','#3E7A5C','#8a5f1f','#6B4E9E','#B14848','#2E7D8F','#C68A3A','#6B7278','#4A6B8A','#7A4E6B'];
+
+const faDigits = ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'];
+function toFa(n){ return String(n).replace(/[0-9]/g, d => faDigits[d]); }
+function fmtMoney(n){ return toFa(Math.round(n).toLocaleString('en-US')) + ' تومان'; }
+
+/* ===================== Jalali calendar helpers ===================== */
+const J_MONTHS = ['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'];
+
+function g2j(gy, gm, gd){
+  const g_d_m = [0,31,59,90,120,151,181,212,243,273,304,334];
+  let jy = (gy <= 1600) ? 0 : 979;
+  gy -= (gy <= 1600) ? 621 : 1600;
+  const gy2 = (gm > 2) ? (gy + 1) : gy;
+  let days = (365*gy) + Math.floor((gy2+3)/4) - Math.floor((gy2+99)/100) + Math.floor((gy2+399)/400) - 80 + gd + g_d_m[gm-1];
+  jy += 33*Math.floor(days/12053);
+  days %= 12053;
+  jy += 4*Math.floor(days/1461);
+  days %= 1461;
+  if (days > 365){ jy += Math.floor((days-1)/365); days = (days-1)%365; }
+  let jm, jd;
+  if (days < 186){ jm = 1 + Math.floor(days/31); jd = 1 + (days%31); }
+  else { jm = 7 + Math.floor((days-186)/30); jd = 1 + ((days-186)%30); }
+  return [jy, jm, jd];
+}
+
+function j2g(jy, jm, jd){
+  let gy = (jy <= 979) ? 621 : 1600;
+  jy -= (jy <= 979) ? 0 : 979;
+  let days = (365*jy) + (Math.floor(jy/33)*8) + Math.floor(((jy%33)+3)/4) + 78 + jd + ((jm < 7) ? (jm-1)*31 : ((jm-7)*30)+186);
+  gy += 400*Math.floor(days/146097);
+  days %= 146097;
+  if (days > 36524){
+    gy += 100*Math.floor((days-1)/36524);
+    days = (days-1)%36524;
+    if (days >= 365) days++;
+  }
+  gy += 4*Math.floor(days/1461);
+  days %= 1461;
+  if (days > 365){ gy += Math.floor((days-1)/365); days = (days-1)%365; }
+  let gd = days + 1;
+  const isLeapG = (gy%4===0 && gy%100!==0) || (gy%400===0);
+  const sal_a = [0,31, isLeapG?29:28, 31,30,31,30,31,31,30,31,30,31];
+  let gm = 0;
+  for(gm=1; gm<=12; gm++){
+    if (gd <= sal_a[gm]) break;
+    gd -= sal_a[gm];
+  }
+  return [gy, gm, gd];
+}
+
+function jMonthDays(m){
+  if(m<=6) return 31;
+  if(m<=11) return 30;
+  return 29; // esfand simplified to always allow 29 (safe on both leap/non-leap years)
+}
+
+function isoFromJalali(jy, jm, jd){
+  const [gy,gm,gd] = j2g(jy,jm,jd);
+  return gy + '-' + String(gm).padStart(2,'0') + '-' + String(gd).padStart(2,'0');
+}
+
+function fmtJalali(isoDate){
+  if(!isoDate) return '—';
+  const d = new Date(isoDate);
+  if(isNaN(d.getTime())) return '—';
+  const [jy,jm,jd] = g2j(d.getFullYear(), d.getMonth()+1, d.getDate());
+  return toFa(jy) + '/' + toFa(String(jm).padStart(2,'0')) + '/' + toFa(String(jd).padStart(2,'0'));
+}
+
+function buildJalaliSelects(prefix, minYear, maxYear){
+  const daySel = document.getElementById(prefix+'_day');
+  const monthSel = document.getElementById(prefix+'_month');
+  const yearSel = document.getElementById(prefix+'_year');
+  monthSel.innerHTML = J_MONTHS.map((m,i)=>`<option value="${i+1}">${m}</option>`).join('');
+  let yOpts = '';
+  for(let y=maxYear; y>=minYear; y--){ yOpts += `<option value="${y}">${toFa(y)}</option>`; }
+  yearSel.innerHTML = yOpts;
+  monthSel.addEventListener('change', ()=> fillJalaliDays(prefix));
+  yearSel.addEventListener('change', ()=> fillJalaliDays(prefix));
+  fillJalaliDays(prefix);
+}
+
+function fillJalaliDays(prefix){
+  const daySel = document.getElementById(prefix+'_day');
+  const monthSel = document.getElementById(prefix+'_month');
+  const curDay = daySel.value;
+  const days = jMonthDays(Number(monthSel.value));
+  let opts = '';
+  for(let d=1; d<=days; d++){ opts += `<option value="${d}">${toFa(d)}</option>`; }
+  daySel.innerHTML = opts;
+  if(curDay && Number(curDay) <= days) daySel.value = curDay;
+}
+
+function setJalaliPicker(prefix, isoDate){
+  let jy, jm, jd;
+  if(isoDate){
+    const d = new Date(isoDate);
+    if(!isNaN(d.getTime())){ [jy,jm,jd] = g2j(d.getFullYear(), d.getMonth()+1, d.getDate()); }
+  }
+  if(!jy){
+    const today = new Date();
+    [jy,jm,jd] = g2j(today.getFullYear(), today.getMonth()+1, today.getDate());
+  }
+  document.getElementById(prefix+'_year').value = jy;
+  document.getElementById(prefix+'_month').value = jm;
+  fillJalaliDays(prefix);
+  document.getElementById(prefix+'_day').value = jd;
+}
+
+function getJalaliPickerIso(prefix){
+  const y = Number(document.getElementById(prefix+'_year').value);
+  const m = Number(document.getElementById(prefix+'_month').value);
+  const d = Number(document.getElementById(prefix+'_day').value);
+  return isoFromJalali(y,m,d);
+}
+
+/* ===================== Data loading ===================== */
+async function loadData(){
+  try{
+    const res = await window.storage.get(STORAGE_KEY, false);
+    if(res && res.value){
+      const parsed = JSON.parse(res.value);
+      assets = parsed.items || [];
+      nextSeq = parsed.nextSeq || (assets.length + 1);
+    }
+  }catch(e){ assets = []; nextSeq = 1; }
+
+  // normalize/migrate older records
+  assets.forEach(a=>{
+    if(typeof a.warranty === 'undefined') a.warranty = false;
+    if(typeof a.warrantyDate === 'undefined') a.warrantyDate = null;
+    if(!Array.isArray(a.maintenance)) a.maintenance = [];
+    if(typeof a.disposed === 'undefined') a.disposed = false;
+    if(typeof a.disposal === 'undefined') a.disposal = null;
+  });
+
+  try{
+    const nameRes = await window.storage.get(NAME_KEY, false);
+    if(nameRes && nameRes.value){ document.getElementById('companyName').value = nameRes.value; }
+  }catch(e){}
+  try{
+    const catRes = await window.storage.get(CATEGORIES_KEY, false);
+    if(catRes && catRes.value){
+      categories = JSON.parse(catRes.value);
+    } else {
+      categories = [...DEFAULT_CATEGORIES];
+      await window.storage.set(CATEGORIES_KEY, JSON.stringify(categories), false);
+    }
+  }catch(e){ categories = [...DEFAULT_CATEGORIES]; }
+
+  populateCategorySelect();
+
+  // init jalali pickers
+  const nowIso = new Date().toISOString().slice(0,10);
+  buildJalaliSelects('f_date', 1350, 1420);
+  buildJalaliSelects('f_warranty', 1350, 1430);
+  buildJalaliSelects('m_date', 1350, 1420);
+  buildJalaliSelects('d_date', 1350, 1420);
+  setJalaliPicker('f_date', nowIso);
+  setJalaliPicker('f_warranty', nowIso);
+  setJalaliPicker('m_date', nowIso);
+  setJalaliPicker('d_date', nowIso);
+
+  render();
+}
+
+async function saveCategories(){
+  try{ await window.storage.set(CATEGORIES_KEY, JSON.stringify(categories), false); }catch(e){ console.error('storage error', e); }
+}
+
+function populateCategorySelect(){
+  const sel = document.getElementById('f_category');
+  const current = sel.value;
+  sel.innerHTML = categories.map(c=>`<option>${escapeHtml(c)}</option>`).join('');
+  if(categories.includes(current)) sel.value = current;
+}
+
+function renderCatList(){
+  const list = document.getElementById('catList');
+  if(categories.length===0){
+    list.innerHTML = '<div style="color:var(--ink-soft); font-size:13px; text-align:center; padding:16px 0;">هنوز دسته‌بندی‌ای اضافه نشده.</div>';
+    return;
+  }
+  list.innerHTML = categories.map(c=>{
+    const count = assets.filter(a=>a.category===c).length;
+    return `
+    <div style="display:flex; align-items:center; justify-content:space-between; border:1px solid var(--line); border-radius:8px; padding:8px 12px;">
+      <span class="cat-chip"><span class="tag-dot" style="background:${catColor(c)}"></span>${escapeHtml(c)} <span style="color:var(--ink-soft); font-weight:400;">(${toFa(count)} مورد)</span></span>
+      <button class="btn-danger-text" onclick="removeCategory('${encodeURIComponent(c)}')">حذف</button>
+    </div>`;
+  }).join('');
+}
+
+window.removeCategory = async function(encoded){
+  const c = decodeURIComponent(encoded);
+  const count = assets.filter(a=>a.category===c).length;
+  if(count>0){
+    if(!confirm(`${toFa(count)} دارایی در این دسته‌بندی ثبت شده. حذف دسته‌بندی باعث حذف خودِ دارایی‌ها نمی‌شود، اما فقط از لیست دسته‌بندی‌ها برداشته می‌شود. ادامه می‌دهید؟`)) return;
+  }
+  categories = categories.filter(x=>x!==c);
+  await saveCategories();
+  populateCategorySelect();
+  renderCatList();
+  render();
+}
+
+document.getElementById('manageCatBtn').addEventListener('click', ()=>{
+  renderCatList();
+  document.getElementById('catOverlay').classList.add('open');
+});
+document.getElementById('closeCatBtn').addEventListener('click', ()=>{
+  document.getElementById('catOverlay').classList.remove('open');
+});
+document.getElementById('catOverlay').addEventListener('click', (e)=>{
+  if(e.target.id==='catOverlay') document.getElementById('catOverlay').classList.remove('open');
+});
+document.getElementById('addCatBtn').addEventListener('click', async ()=>{
+  const input = document.getElementById('newCatInput');
+  const name = input.value.trim();
+  if(!name) return;
+  if(categories.includes(name)){ alert('این دسته‌بندی قبلاً وجود دارد.'); return; }
+  categories.push(name);
+  await saveCategories();
+  input.value='';
+  populateCategorySelect();
+  renderCatList();
+  render();
+});
+document.getElementById('newCatInput').addEventListener('keydown', (e)=>{
+  if(e.key==='Enter'){ document.getElementById('addCatBtn').click(); }
+});
+
+async function saveData(){
+  try{
+    await window.storage.set(STORAGE_KEY, JSON.stringify({items: assets, nextSeq}), false);
+  }catch(e){ console.error('storage error', e); }
+}
+
+document.getElementById('companyName').addEventListener('change', async (e)=>{
+  try{ await window.storage.set(NAME_KEY, e.target.value, false); }catch(err){}
+});
+
+function bookValue(a){
+  const cost = Number(a.cost)||0;
+  const life = Number(a.life);
+  if(!life || life<=0) return cost;
+  const purchase = new Date(a.date);
+  if(isNaN(purchase.getTime())) return cost;
+  const years = (Date.now() - purchase.getTime()) / (1000*60*60*24*365.25);
+  const dep = (cost/life) * Math.max(years,0);
+  return Math.max(cost - dep, 0);
+}
+
+function statusPillClass(s){
+  if(s==='سالم') return 'pill-ok';
+  if(s==='نیازمند تعمیر') return 'pill-warn';
+  return 'pill-bad';
+}
+
+function catColor(cat){
+  let hash = 0;
+  for(let i=0;i<cat.length;i++){ hash = (hash*31 + cat.charCodeAt(i)) >>> 0; }
+  return CAT_PALETTE[hash % CAT_PALETTE.length];
+}
+
+function populateCategoryFilter(){
+  const sel = document.getElementById('filterCategory');
+  const current = sel.value;
+  const usedNotInList = [...new Set(assets.map(a=>a.category))].filter(c=>!categories.includes(c));
+  const cats = [...categories, ...usedNotInList];
+  sel.innerHTML = '<option value="">همه دسته‌بندی‌ها</option>' + cats.map(c=>`<option value="${c}">${escapeHtml(c)}</option>`).join('');
+  sel.value = current;
+}
+
+function render(){
+  populateCategoryFilter();
+
+  const search = document.getElementById('searchInput').value.trim().toLowerCase();
+  const fCat = document.getElementById('filterCategory').value;
+  const fStatus = document.getElementById('filterStatus').value;
+  const disposedView = fStatus === 'DISPOSED';
+
+  let filtered = assets.filter(a=>{
+    if(disposedView){
+      if(!a.disposed) return false;
+    } else {
+      if(a.disposed) return false;
+      if(fStatus && a.status !== fStatus) return false;
+    }
+    if(fCat && a.category !== fCat) return false;
+    if(search){
+      const hay = `${a.name} ${a.serial||''} ${a.tag}`.toLowerCase();
+      if(!hay.includes(search)) return false;
+    }
+    return true;
+  });
+
+  filtered.sort((a,b)=> b.seq - a.seq);
+
+  const tbody = document.getElementById('tableBody');
+  const empty = document.getElementById('emptyState');
+
+  if(filtered.length===0){
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    empty.querySelector('.big').textContent = disposedView ? 'هنوز دارایی‌ای خارج نشده' : 'هنوز دارایی‌ای ثبت نشده';
+  } else {
+    empty.style.display = 'none';
+    tbody.innerHTML = filtered.map(a=>{
+      const bv = a.disposed && a.disposal && typeof a.disposal.bookValueAtDisposal === 'number'
+        ? a.disposal.bookValueAtDisposal
+        : bookValue(a);
+
+      let metaLines = '';
+      if(a.serial) metaLines += `<div class="asset-meta">سریال: ${escapeHtml(a.serial)}</div>`;
+      if(a.warranty){
+        metaLines += `<div class="asset-meta warranty">🛡 ${a.warrantyDate ? 'گارانتی تا ' + fmtJalali(a.warrantyDate) : 'دارای گارانتی'}</div>`;
+      }
+      if(a.maintenance && a.maintenance.length){
+        metaLines += `<div class="asset-meta maint">🛠 ${toFa(a.maintenance.length)} رکورد تعمیر و نگهداری</div>`;
+      }
+      if(a.disposed && a.disposal){
+        metaLines += `<div class="asset-meta disposal">📤 خروج (${escapeHtml(a.disposal.type||'')}) در ${fmtJalali(a.disposal.date)}${a.disposal.amount ? ' • ' + fmtMoney(a.disposal.amount) : ''}</div>`;
+      }
+
+      const statusHtml = a.disposed
+        ? `<span class="pill pill-neutral">خارج شده</span>`
+        : `<span class="pill ${statusPillClass(a.status)}">${a.status}</span>`;
+
+      const actionsHtml = a.disposed
+        ? `
+          <button class="icon-btn" onclick="restoreAsset('${a.id}')" title="بازگردانی به فهرست فعال">↩</button>
+          <button class="icon-btn" onclick="deleteAsset('${a.id}')" title="حذف دائم">🗑</button>
+        `
+        : `
+          <button class="icon-btn" onclick="openEdit('${a.id}')" title="ویرایش">✎</button>
+          <button class="icon-btn" onclick="openMaintenance('${a.id}')" title="تعمیر و نگهداری">🛠</button>
+          <button class="icon-btn" onclick="openDispose('${a.id}')" title="خروج دارایی">📤</button>
+          <button class="icon-btn" onclick="deleteAsset('${a.id}')" title="حذف">🗑</button>
+        `;
+
+      return `
+      <tr>
+        <td><span class="asset-tag">${a.tag}</span></td>
+        <td>
+          <div class="asset-name">${escapeHtml(a.name)}</div>
+          ${metaLines}
+        </td>
+        <td><span class="cat-chip"><span class="tag-dot" style="background:${catColor(a.category)}"></span>${a.category}</span></td>
+        <td>
+          <div>${a.location ? escapeHtml(a.location) : '—'}</div>
+          ${a.custodian ? `<div class="asset-meta">${escapeHtml(a.custodian)}</div>` : ''}
+        </td>
+        <td class="num">${fmtJalali(a.date)}</td>
+        <td class="num money">${fmtMoney(a.cost)}</td>
+        <td class="num money">${fmtMoney(bv)}</td>
+        <td>${statusHtml}</td>
+        <td>
+          <div class="row-actions">${actionsHtml}</div>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  // KPIs — based on active (non-disposed) assets only
+  const active = assets.filter(a=>!a.disposed);
+  document.getElementById('kpiCount').textContent = toFa(active.length);
+  document.getElementById('kpiCountSub').textContent = active.length ? `در ${toFa([...new Set(active.map(a=>a.category))].length)} دسته‌بندی` : 'هنوز چیزی ثبت نشده';
+  const totalCost = active.reduce((s,a)=> s + (Number(a.cost)||0), 0);
+  const totalBV = active.reduce((s,a)=> s + bookValue(a), 0);
+  document.getElementById('kpiCost').textContent = fmtMoney(totalCost);
+  document.getElementById('kpiBookValue').textContent = fmtMoney(totalBV);
+
+  const okCount = active.filter(a=>a.status==='سالم').length;
+  const warnCount = active.filter(a=>a.status==='نیازمند تعمیر').length;
+  const badCount = active.filter(a=>a.status==='اسقاط').length;
+  document.getElementById('kpiStatus').innerHTML = `
+    <span style="color:var(--green)">● ${toFa(okCount)}</span>
+    <span style="color:#8a5f1f">● ${toFa(warnCount)}</span>
+    <span style="color:var(--red)">● ${toFa(badCount)}</span>
+  `;
+  const disposedCount = assets.filter(a=>a.disposed).length;
+  document.getElementById('kpiStatusSub').textContent = disposedCount ? `سالم / نیازمند تعمیر / اسقاط • ${toFa(disposedCount)} دارایی خارج شده` : 'سالم / نیازمند تعمیر / اسقاط';
+}
+
+function escapeHtml(str){
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+function genTag(seq){
+  return 'AST-' + String(seq).padStart(4,'0');
+}
+
+/* ===================== Add / Edit asset ===================== */
+function openAdd(){
+  editingId = null;
+  document.getElementById('modalTitle').textContent = 'ثبت دارایی جدید';
+  document.getElementById('f_name').value='';
+  populateCategorySelect();
+  if(categories.length) document.getElementById('f_category').value = categories[0];
+  document.getElementById('f_serial').value='';
+  setJalaliPicker('f_date', new Date().toISOString().slice(0,10));
+  document.getElementById('f_cost').value='';
+  document.getElementById('f_life').value='';
+  document.getElementById('f_status').value='سالم';
+  document.getElementById('f_hasWarranty').value='no';
+  document.getElementById('warrantyDateWrap').style.display='none';
+  setJalaliPicker('f_warranty', new Date().toISOString().slice(0,10));
+  document.getElementById('f_location').value='';
+  document.getElementById('f_custodian').value='';
+  document.getElementById('f_notes').value='';
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById('f_name').focus();
+}
+
+window.openEdit = function(id){
+  const a = assets.find(x=>x.id===id);
+  if(!a) return;
+  editingId = id;
+  document.getElementById('modalTitle').textContent = 'ویرایش دارایی';
+  document.getElementById('f_name').value = a.name;
+  populateCategorySelect();
+  const catSel = document.getElementById('f_category');
+  if(![...catSel.options].some(o=>o.value===a.category)){
+    catSel.insertAdjacentHTML('beforeend', `<option>${escapeHtml(a.category)}</option>`);
+  }
+  catSel.value = a.category;
+  document.getElementById('f_serial').value = a.serial||'';
+  setJalaliPicker('f_date', a.date);
+  document.getElementById('f_cost').value = a.cost;
+  document.getElementById('f_life').value = a.life||'';
+  document.getElementById('f_status').value = a.status;
+  document.getElementById('f_hasWarranty').value = a.warranty ? 'yes' : 'no';
+  document.getElementById('warrantyDateWrap').style.display = a.warranty ? 'block' : 'none';
+  setJalaliPicker('f_warranty', a.warrantyDate || new Date().toISOString().slice(0,10));
+  document.getElementById('f_location').value = a.location||'';
+  document.getElementById('f_custodian').value = a.custodian||'';
+  document.getElementById('f_notes').value = a.notes||'';
+  document.getElementById('overlay').classList.add('open');
+}
+
+window.deleteAsset = async function(id){
+  if(!confirm('این دارایی حذف شود؟ این عمل قابل بازگشت نیست.')) return;
+  assets = assets.filter(a=>a.id!==id);
+  await saveData();
+  render();
+}
+
+function closeModal(){ document.getElementById('overlay').classList.remove('open'); }
+
+document.getElementById('addBtn').addEventListener('click', openAdd);
+document.getElementById('cancelBtn').addEventListener('click', closeModal);
+document.getElementById('overlay').addEventListener('click', (e)=>{ if(e.target.id==='overlay') closeModal(); });
+
+document.getElementById('f_hasWarranty').addEventListener('change', (e)=>{
+  document.getElementById('warrantyDateWrap').style.display = e.target.value==='yes' ? 'block' : 'none';
+});
+
+document.getElementById('saveBtn').addEventListener('click', async ()=>{
+  const name = document.getElementById('f_name').value.trim();
+  const cost = document.getElementById('f_cost').value;
+  if(!name || cost===''){
+    alert('لطفاً نام دارایی و قیمت خرید را وارد کنید.');
+    return;
+  }
+  const hasWarranty = document.getElementById('f_hasWarranty').value === 'yes';
+  const data = {
+    name,
+    category: document.getElementById('f_category').value,
+    serial: document.getElementById('f_serial').value.trim(),
+    date: getJalaliPickerIso('f_date'),
+    cost: Number(cost),
+    life: document.getElementById('f_life').value ? Number(document.getElementById('f_life').value) : null,
+    status: document.getElementById('f_status').value,
+    warranty: hasWarranty,
+    warrantyDate: hasWarranty ? getJalaliPickerIso('f_warranty') : null,
+    location: document.getElementById('f_location').value.trim(),
+    custodian: document.getElementById('f_custodian').value.trim(),
+    notes: document.getElementById('f_notes').value.trim(),
+  };
+
+  if(editingId){
+    const idx = assets.findIndex(a=>a.id===editingId);
+    assets[idx] = {...assets[idx], ...data};
+  } else {
+    assets.push({
+      id: 'a_' + Date.now() + '_' + Math.floor(Math.random()*1000),
+      seq: nextSeq,
+      tag: genTag(nextSeq),
+      maintenance: [],
+      disposed: false,
+      disposal: null,
+      ...data
+    });
+    nextSeq += 1;
+  }
+  await saveData();
+  closeModal();
+  render();
+});
+
+document.getElementById('searchInput').addEventListener('input', render);
+document.getElementById('filterCategory').addEventListener('change', render);
+document.getElementById('filterStatus').addEventListener('change', render);
+
+/* ===================== Maintenance ===================== */
+window.openMaintenance = function(id){
+  const a = assets.find(x=>x.id===id);
+  if(!a) return;
+  currentMaintAssetId = id;
+  document.getElementById('maintAssetName').textContent = `${a.tag} • ${a.name}`;
+  document.getElementById('m_desc').value='';
+  document.getElementById('m_cost').value='';
+  document.getElementById('m_tech').value='';
+  setJalaliPicker('m_date', new Date().toISOString().slice(0,10));
+  renderMaintList();
+  document.getElementById('maintOverlay').classList.add('open');
+}
+
+function renderMaintList(){
+  const a = assets.find(x=>x.id===currentMaintAssetId);
+  const list = document.getElementById('maintList');
+  if(!a || !a.maintenance || a.maintenance.length===0){
+    list.innerHTML = '<div style="color:var(--ink-soft); font-size:13px; text-align:center; padding:14px 0;">هنوز رکوردی ثبت نشده.</div>';
+    return;
+  }
+  const sorted = [...a.maintenance].sort((x,y)=> new Date(y.date) - new Date(x.date));
+  list.innerHTML = sorted.map(m=>`
+    <div class="maint-item">
+      <div>
+        <div class="maint-date num">${fmtJalali(m.date)}</div>
+        <div class="maint-desc">${escapeHtml(m.desc)}</div>
+        <div class="maint-meta">${m.tech ? escapeHtml(m.tech) + ' • ' : ''}${m.cost ? fmtMoney(m.cost) : 'بدون هزینه'}</div>
+      </div>
+      <button class="btn-danger-text" onclick="deleteMaint('${m.id}')">حذف</button>
+    </div>
+  `).join('');
+}
+
+document.getElementById('addMaintBtn').addEventListener('click', async ()=>{
+  const desc = document.getElementById('m_desc').value.trim();
+  if(!desc){ alert('لطفاً شرح تعمیر یا سرویس را وارد کنید.'); return; }
+  const a = assets.find(x=>x.id===currentMaintAssetId);
+  if(!a) return;
+  a.maintenance.push({
+    id: 'm_' + Date.now() + '_' + Math.floor(Math.random()*1000),
+    date: getJalaliPickerIso('m_date'),
+    desc,
+    cost: document.getElementById('m_cost').value ? Number(document.getElementById('m_cost').value) : 0,
+    tech: document.getElementById('m_tech').value.trim(),
+  });
+  await saveData();
+  document.getElementById('m_desc').value='';
+  document.getElementById('m_cost').value='';
+  document.getElementById('m_tech').value='';
+  renderMaintList();
+  render();
+});
+
+window.deleteMaint = async function(recordId){
+  const a = assets.find(x=>x.id===currentMaintAssetId);
+  if(!a) return;
+  if(!confirm('این رکورد تعمیر و نگهداری حذف شود؟')) return;
+  a.maintenance = a.maintenance.filter(m=>m.id!==recordId);
+  await saveData();
+  renderMaintList();
+  render();
+}
+
+document.getElementById('closeMaintBtn').addEventListener('click', ()=>{
+  document.getElementById('maintOverlay').classList.remove('open');
+});
+document.getElementById('maintOverlay').addEventListener('click', (e)=>{
+  if(e.target.id==='maintOverlay') document.getElementById('maintOverlay').classList.remove('open');
+});
+
+/* ===================== Disposal ===================== */
+window.openDispose = function(id){
+  const a = assets.find(x=>x.id===id);
+  if(!a) return;
+  currentDisposeAssetId = id;
+  document.getElementById('disposeAssetName').textContent = `${a.tag} • ${a.name}`;
+  setJalaliPicker('d_date', new Date().toISOString().slice(0,10));
+  document.getElementById('d_type').value = 'فروش';
+  document.getElementById('d_amount').value='';
+  document.getElementById('d_recipient').value='';
+  document.getElementById('d_notes').value='';
+  document.getElementById('disposeOverlay').classList.add('open');
+}
+
+document.getElementById('cancelDisposeBtn').addEventListener('click', ()=>{
+  document.getElementById('disposeOverlay').classList.remove('open');
+});
+document.getElementById('disposeOverlay').addEventListener('click', (e)=>{
+  if(e.target.id==='disposeOverlay') document.getElementById('disposeOverlay').classList.remove('open');
+});
+
+document.getElementById('confirmDisposeBtn').addEventListener('click', async ()=>{
+  const a = assets.find(x=>x.id===currentDisposeAssetId);
+  if(!a) return;
+  if(!confirm('این دارایی از فهرست دارایی‌های فعال خارج شود؟ در صورت نیاز می‌توانید بعداً آن را بازگردانید.')) return;
+  const bvAtDisposal = bookValue(a);
+  a.disposal = {
+    date: getJalaliPickerIso('d_date'),
+    type: document.getElementById('d_type').value,
+    amount: document.getElementById('d_amount').value ? Number(document.getElementById('d_amount').value) : 0,
+    recipient: document.getElementById('d_recipient').value.trim(),
+    notes: document.getElementById('d_notes').value.trim(),
+    bookValueAtDisposal: bvAtDisposal,
+  };
+  a.disposed = true;
+  await saveData();
+  document.getElementById('disposeOverlay').classList.remove('open');
+  render();
+});
+
+window.restoreAsset = async function(id){
+  const a = assets.find(x=>x.id===id);
+  if(!a) return;
+  if(!confirm('این دارایی به فهرست دارایی‌های فعال بازگردانده شود؟')) return;
+  a.disposed = false;
+  a.disposal = null;
+  await saveData();
+  render();
+}
+
+/* ===================== Export ===================== */
+document.getElementById('exportBtn').addEventListener('click', ()=>{
+  if(assets.length===0){ alert('هنوز دارایی‌ای برای خروجی گرفتن وجود ندارد.'); return; }
+  const headers = ['شماره اموال','نام دارایی','دسته‌بندی','شماره سریال','تاریخ خرید (شمسی)','قیمت خرید','عمر مفید','ارزش دفتری','وضعیت','گارانتی','تاریخ پایان گارانتی (شمسی)','تعداد رکورد تعمیرات','محل استقرار','مسئول','وضعیت خروج','تاریخ خروج (شمسی)','نوع خروج','مبلغ خروج','توضیحات'];
+  const rows = assets.map(a=>{
+    const bv = a.disposed && a.disposal && typeof a.disposal.bookValueAtDisposal === 'number' ? a.disposal.bookValueAtDisposal : bookValue(a);
+    return [
+      a.tag, a.name, a.category, a.serial||'', fmtJalali(a.date), a.cost, a.life||'', Math.round(bv), a.status,
+      a.warranty ? 'دارد' : 'ندارد', a.warrantyDate ? fmtJalali(a.warrantyDate) : '',
+      (a.maintenance||[]).length,
+      a.location||'', a.custodian||'',
+      a.disposed ? 'خارج شده' : 'فعال',
+      a.disposed && a.disposal ? fmtJalali(a.disposal.date) : '',
+      a.disposed && a.disposal ? a.disposal.type : '',
+      a.disposed && a.disposal ? a.disposal.amount : '',
+      (a.notes||'').replace(/\n/g,' ')
+    ];
+  });
+  const csv = '\uFEFF' + [headers, ...rows].map(r=> r.map(cell=>`"${String(cell).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'دارایی-ثابت.csv';
+  link.click();
+  URL.revokeObjectURL(url);
+});
+
+/* ===================== Install / Backup / Restore ===================== */
+document.getElementById('installBtn').addEventListener('click', async ()=>{
+  if(!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  await deferredInstallPrompt.userChoice;
+  deferredInstallPrompt = null;
+  document.getElementById('installBtn').style.display = 'none';
+});
+
+document.getElementById('backupBtn').addEventListener('click', ()=>{
+  const payload = {
+    type: 'fixed-assets-backup',
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    companyName: document.getElementById('companyName').value,
+    categories,
+    nextSeq,
+    assets
+  };
+  const json = JSON.stringify(payload, null, 2);
+  const blob = new Blob([json], {type:'application/json;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  const stamp = new Date().toISOString().slice(0,10);
+  link.href = url;
+  link.download = `backup-دارایی-ثابت-${stamp}.json`;
+  link.click();
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById('restoreBtn').addEventListener('click', ()=>{
+  document.getElementById('restoreFileInput').click();
+});
+
+document.getElementById('restoreFileInput').addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = async (ev)=>{
+    try{
+      const data = JSON.parse(ev.target.result);
+      if(data.type !== 'fixed-assets-backup' || !Array.isArray(data.assets)){
+        alert('این فایل یک بک‌آپ معتبر از این اپ نیست.');
+        return;
+      }
+      if(!confirm('بازیابی این بک‌آپ، تمام اطلاعات فعلی روی این دستگاه را جایگزین می‌کند. ادامه می‌دهید؟')) return;
+      assets = data.assets || [];
+      assets.forEach(a=>{
+        if(typeof a.warranty === 'undefined') a.warranty = false;
+        if(typeof a.warrantyDate === 'undefined') a.warrantyDate = null;
+        if(!Array.isArray(a.maintenance)) a.maintenance = [];
+        if(typeof a.disposed === 'undefined') a.disposed = false;
+        if(typeof a.disposal === 'undefined') a.disposal = null;
+      });
+      categories = data.categories || [...DEFAULT_CATEGORIES];
+      nextSeq = data.nextSeq || (assets.length + 1);
+      if(data.companyName){ document.getElementById('companyName').value = data.companyName; }
+      await saveData();
+      await saveCategories();
+      await window.storage.set(NAME_KEY, document.getElementById('companyName').value, false);
+      populateCategorySelect();
+      render();
+      alert('بازیابی با موفقیت انجام شد.');
+    }catch(err){
+      alert('خطا در خواندن فایل بک‌آپ. لطفاً فایل صحیح را انتخاب کنید.');
+    }
+    e.target.value = '';
+  };
+  reader.readAsText(file);
+});
+
+loadData();
+</script>
+</body>
+</html>
