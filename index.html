@@ -314,6 +314,14 @@ tbody tr:hover{ background:#FAFAF7; }
     <div class="modal-sub">اطلاعات دارایی را کامل کنید. موارد ستاره‌دار الزامی هستند.</div>
     <div class="form-grid">
       <div class="field full">
+        <label>عکس دارایی</label>
+        <div id="photoPreviewWrap" style="display:none; margin-bottom:10px; align-items:center; gap:12px;">
+          <img id="photoPreview" style="width:80px; height:80px; object-fit:cover; border-radius:8px; border:1px solid var(--line);">
+          <button type="button" class="btn-danger-text" id="removePhotoBtn">حذف عکس</button>
+        </div>
+        <input type="file" id="f_photo" accept="image/*" capture="environment">
+      </div>
+      <div class="field full">
         <label>نام دارایی *</label>
         <input id="f_name" placeholder="مثلاً لپ‌تاپ Dell Latitude 5440">
       </div>
@@ -324,6 +332,10 @@ tbody tr:hover{ background:#FAFAF7; }
       <div class="field">
         <label>شماره سریال</label>
         <input id="f_serial" placeholder="Serial Number">
+      </div>
+      <div class="field">
+        <label>محل خرید / فروشنده</label>
+        <input id="f_vendor" placeholder="مثلاً دیجی‌کالا، فروشگاه فلان...">
       </div>
       <div class="field full">
         <label>تاریخ خرید (شمسی) *</label>
@@ -446,6 +458,16 @@ tbody tr:hover{ background:#FAFAF7; }
 </div>
 
 <!-- Disposal modal -->
+<!-- Photo viewer -->
+<div class="overlay" id="photoOverlay">
+  <div class="modal" style="max-width:520px; text-align:center; padding:16px;">
+    <img id="photoOverlayImg" style="max-width:100%; max-height:70vh; border-radius:10px;">
+    <div class="modal-actions" style="justify-content:center;">
+      <button class="btn btn-outline" id="closePhotoBtn">بستن</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="disposeOverlay">
   <div class="modal">
     <h2>خروج دارایی</h2>
@@ -490,28 +512,80 @@ tbody tr:hover{ background:#FAFAF7; }
 
 <script>
 /* ===================== Local storage engine =====================
-   Runs fully on-device (localStorage) so the app works standalone,
-   offline, and independent of any external account. */
+   Runs fully on-device via IndexedDB (large capacity — needed now that
+   assets can include photos), so the app works standalone, offline,
+   and independent of any external account. */
+const IDB_NAME = 'fixed-assets-db';
+const IDB_STORE = 'kv';
+let idbPromise = null;
+
+function openIdb(){
+  if(idbPromise) return idbPromise;
+  idbPromise = new Promise((resolve, reject)=>{
+    const req = indexedDB.open(IDB_NAME, 1);
+    req.onupgradeneeded = ()=>{
+      req.result.createObjectStore(IDB_STORE, { keyPath: 'key' });
+    };
+    req.onsuccess = ()=> resolve(req.result);
+    req.onerror = ()=> reject(req.error);
+  });
+  return idbPromise;
+}
+
 window.storage = {
   async get(key){
-    const raw = localStorage.getItem('fa_' + key);
-    if(raw === null) return null;
-    return { key, value: raw, shared: false };
+    const db = await openIdb();
+    return new Promise((resolve, reject)=>{
+      const tx = db.transaction(IDB_STORE, 'readonly');
+      const req = tx.objectStore(IDB_STORE).get(key);
+      req.onsuccess = ()=> resolve(req.result ? { key, value: req.result.value, shared:false } : null);
+      req.onerror = ()=> reject(req.error);
+    });
   },
   async set(key, value){
-    localStorage.setItem('fa_' + key, value);
-    return { key, value, shared: false };
+    const db = await openIdb();
+    return new Promise((resolve, reject)=>{
+      const tx = db.transaction(IDB_STORE, 'readwrite');
+      tx.objectStore(IDB_STORE).put({ key, value });
+      tx.oncomplete = ()=> resolve({ key, value, shared:false });
+      tx.onerror = ()=> reject(tx.error);
+    });
   },
   async delete(key){
-    localStorage.removeItem('fa_' + key);
-    return { key, deleted: true, shared: false };
+    const db = await openIdb();
+    return new Promise((resolve, reject)=>{
+      const tx = db.transaction(IDB_STORE, 'readwrite');
+      tx.objectStore(IDB_STORE).delete(key);
+      tx.oncomplete = ()=> resolve({ key, deleted:true, shared:false });
+      tx.onerror = ()=> reject(tx.error);
+    });
   },
   async list(prefix){
-    const p = 'fa_' + (prefix||'');
-    const keys = Object.keys(localStorage).filter(k=>k.startsWith(p)).map(k=>k.slice(3));
-    return { keys, prefix, shared: false };
+    const db = await openIdb();
+    return new Promise((resolve, reject)=>{
+      const tx = db.transaction(IDB_STORE, 'readonly');
+      const req = tx.objectStore(IDB_STORE).getAllKeys();
+      req.onsuccess = ()=> resolve({ keys: req.result.filter(k=>!prefix || k.startsWith(prefix)), prefix, shared:false });
+      req.onerror = ()=> reject(req.error);
+    });
   }
 };
+
+// یک‌بار مهاجرت از localStorage قدیمی (نسخه‌ی قبلی اپ) به IndexedDB،
+// تا اطلاعاتی که قبلاً ثبت کرده بودید از دست نره.
+async function migrateLegacyLocalStorage(){
+  try{
+    const already = await window.storage.get(STORAGE_KEY);
+    if(already) return;
+    const legacyData = localStorage.getItem('fa_' + STORAGE_KEY);
+    if(!legacyData) return;
+    await window.storage.set(STORAGE_KEY, legacyData);
+    const legacyName = localStorage.getItem('fa_' + NAME_KEY);
+    if(legacyName) await window.storage.set(NAME_KEY, legacyName);
+    const legacyCats = localStorage.getItem('fa_' + CATEGORIES_KEY);
+    if(legacyCats) await window.storage.set(CATEGORIES_KEY, legacyCats);
+  }catch(e){ /* اگه مهاجرت شکست خورد، اپ با حافظه‌ی خالی ادامه می‌ده */ }
+}
 
 if('serviceWorker' in navigator){
   window.addEventListener('load', ()=>{
@@ -656,6 +730,7 @@ function getJalaliPickerIso(prefix){
 
 /* ===================== Data loading ===================== */
 async function loadData(){
+  await migrateLegacyLocalStorage();
   try{
     const res = await window.storage.get(STORAGE_KEY, false);
     if(res && res.value){
@@ -672,6 +747,8 @@ async function loadData(){
     if(!Array.isArray(a.maintenance)) a.maintenance = [];
     if(typeof a.disposed === 'undefined') a.disposed = false;
     if(typeof a.disposal === 'undefined') a.disposal = null;
+    if(typeof a.photo === 'undefined') a.photo = null;
+    if(typeof a.vendor === 'undefined') a.vendor = '';
   });
 
   try{
@@ -773,7 +850,10 @@ document.getElementById('newCatInput').addEventListener('keydown', (e)=>{
 async function saveData(){
   try{
     await window.storage.set(STORAGE_KEY, JSON.stringify({items: assets, nextSeq}), false);
-  }catch(e){ console.error('storage error', e); }
+  }catch(e){
+    console.error('storage error', e);
+    alert('ذخیره‌سازی انجام نشد؛ احتمالاً حافظه‌ی دستگاه پر شده (معمولاً به‌خاطر تعداد زیاد عکس). یک بک‌آپ بگیرید و چند عکس قدیمی را حذف کنید.');
+  }
 }
 
 document.getElementById('companyName').addEventListener('change', async (e)=>{
@@ -829,7 +909,7 @@ function render(){
     }
     if(fCat && a.category !== fCat) return false;
     if(search){
-      const hay = `${a.name} ${a.serial||''} ${a.tag}`.toLowerCase();
+      const hay = `${a.name} ${a.serial||''} ${a.vendor||''} ${a.tag}`.toLowerCase();
       if(!hay.includes(search)) return false;
     }
     return true;
@@ -853,6 +933,7 @@ function render(){
 
       let metaLines = '';
       if(a.serial) metaLines += `<div class="asset-meta">سریال: ${escapeHtml(a.serial)}</div>`;
+      if(a.vendor) metaLines += `<div class="asset-meta">محل خرید: ${escapeHtml(a.vendor)}</div>`;
       if(a.warranty){
         metaLines += `<div class="asset-meta warranty">🛡 ${a.warrantyDate ? 'گارانتی تا ' + fmtJalali(a.warrantyDate) : 'دارای گارانتی'}</div>`;
       }
@@ -883,8 +964,13 @@ function render(){
       <tr>
         <td><span class="asset-tag">${a.tag}</span></td>
         <td>
-          <div class="asset-name">${escapeHtml(a.name)}</div>
-          ${metaLines}
+          <div style="display:flex; align-items:flex-start; gap:10px;">
+            ${a.photo ? `<img src="${a.photo}" onclick="openPhotoViewer('${a.id}')" style="width:38px;height:38px;object-fit:cover;border-radius:6px;border:1px solid var(--line);flex-shrink:0;cursor:pointer;">` : ''}
+            <div>
+              <div class="asset-name">${escapeHtml(a.name)}</div>
+              ${metaLines}
+            </div>
+          </div>
         </td>
         <td><span class="cat-chip"><span class="tag-dot" style="background:${catColor(a.category)}"></span>${a.category}</span></td>
         <td>
@@ -934,13 +1020,80 @@ function genTag(seq){
 }
 
 /* ===================== Add / Edit asset ===================== */
+window.openPhotoViewer = function(id){
+  const a = assets.find(x=>x.id===id);
+  if(!a || !a.photo) return;
+  document.getElementById('photoOverlayImg').src = a.photo;
+  document.getElementById('photoOverlay').classList.add('open');
+}
+document.getElementById('closePhotoBtn').addEventListener('click', ()=>{
+  document.getElementById('photoOverlay').classList.remove('open');
+});
+document.getElementById('photoOverlay').addEventListener('click', (e)=>{
+  if(e.target.id==='photoOverlay') document.getElementById('photoOverlay').classList.remove('open');
+});
+
+let pendingPhoto = null;
+
+function resizeImageFile(file, maxDim, quality){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = (e)=>{
+      const img = new Image();
+      img.onload = ()=>{
+        let w = img.width, h = img.height;
+        if(w >= h && w > maxDim){ h = Math.round(h * maxDim / w); w = maxDim; }
+        else if(h > w && h > maxDim){ w = Math.round(w * maxDim / h); h = maxDim; }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = ()=> reject(new Error('invalid image'));
+      img.src = e.target.result;
+    };
+    reader.onerror = ()=> reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
+function showPhotoPreview(dataUrl){
+  const wrap = document.getElementById('photoPreviewWrap');
+  if(dataUrl){
+    document.getElementById('photoPreview').src = dataUrl;
+    wrap.style.display = 'flex';
+  } else {
+    wrap.style.display = 'none';
+  }
+}
+
+document.getElementById('f_photo').addEventListener('change', async (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  try{
+    pendingPhoto = await resizeImageFile(file, 900, 0.72);
+    showPhotoPreview(pendingPhoto);
+  }catch(err){
+    alert('این فایل به‌عنوان عکس قابل خواندن نبود.');
+  }
+  e.target.value = '';
+});
+
+document.getElementById('removePhotoBtn').addEventListener('click', ()=>{
+  pendingPhoto = null;
+  showPhotoPreview(null);
+});
+
 function openAdd(){
   editingId = null;
   document.getElementById('modalTitle').textContent = 'ثبت دارایی جدید';
+  pendingPhoto = null;
+  showPhotoPreview(null);
   document.getElementById('f_name').value='';
   populateCategorySelect();
   if(categories.length) document.getElementById('f_category').value = categories[0];
   document.getElementById('f_serial').value='';
+  document.getElementById('f_vendor').value='';
   setJalaliPicker('f_date', new Date().toISOString().slice(0,10));
   document.getElementById('f_cost').value='';
   document.getElementById('f_life').value='';
@@ -960,6 +1113,8 @@ window.openEdit = function(id){
   if(!a) return;
   editingId = id;
   document.getElementById('modalTitle').textContent = 'ویرایش دارایی';
+  pendingPhoto = a.photo || null;
+  showPhotoPreview(pendingPhoto);
   document.getElementById('f_name').value = a.name;
   populateCategorySelect();
   const catSel = document.getElementById('f_category');
@@ -968,6 +1123,7 @@ window.openEdit = function(id){
   }
   catSel.value = a.category;
   document.getElementById('f_serial').value = a.serial||'';
+  document.getElementById('f_vendor').value = a.vendor||'';
   setJalaliPicker('f_date', a.date);
   document.getElementById('f_cost').value = a.cost;
   document.getElementById('f_life').value = a.life||'';
@@ -1010,6 +1166,7 @@ document.getElementById('saveBtn').addEventListener('click', async ()=>{
     name,
     category: document.getElementById('f_category').value,
     serial: document.getElementById('f_serial').value.trim(),
+    vendor: document.getElementById('f_vendor').value.trim(),
     date: getJalaliPickerIso('f_date'),
     cost: Number(cost),
     life: document.getElementById('f_life').value ? Number(document.getElementById('f_life').value) : null,
@@ -1019,6 +1176,7 @@ document.getElementById('saveBtn').addEventListener('click', async ()=>{
     location: document.getElementById('f_location').value.trim(),
     custodian: document.getElementById('f_custodian').value.trim(),
     notes: document.getElementById('f_notes').value.trim(),
+    photo: pendingPhoto,
   };
 
   if(editingId){
@@ -1169,13 +1327,14 @@ window.restoreAsset = async function(id){
 /* ===================== Export ===================== */
 document.getElementById('exportBtn').addEventListener('click', ()=>{
   if(assets.length===0){ alert('هنوز دارایی‌ای برای خروجی گرفتن وجود ندارد.'); return; }
-  const headers = ['شماره اموال','نام دارایی','دسته‌بندی','شماره سریال','تاریخ خرید (شمسی)','قیمت خرید','عمر مفید','ارزش دفتری','وضعیت','گارانتی','تاریخ پایان گارانتی (شمسی)','تعداد رکورد تعمیرات','محل استقرار','مسئول','وضعیت خروج','تاریخ خروج (شمسی)','نوع خروج','مبلغ خروج','توضیحات'];
+  const headers = ['شماره اموال','نام دارایی','دسته‌بندی','شماره سریال','محل خرید','تاریخ خرید (شمسی)','قیمت خرید','عمر مفید','ارزش دفتری','وضعیت','گارانتی','تاریخ پایان گارانتی (شمسی)','تعداد رکورد تعمیرات','عکس دارد','محل استقرار','مسئول','وضعیت خروج','تاریخ خروج (شمسی)','نوع خروج','مبلغ خروج','توضیحات'];
   const rows = assets.map(a=>{
     const bv = a.disposed && a.disposal && typeof a.disposal.bookValueAtDisposal === 'number' ? a.disposal.bookValueAtDisposal : bookValue(a);
     return [
-      a.tag, a.name, a.category, a.serial||'', fmtJalali(a.date), a.cost, a.life||'', Math.round(bv), a.status,
+      a.tag, a.name, a.category, a.serial||'', a.vendor||'', fmtJalali(a.date), a.cost, a.life||'', Math.round(bv), a.status,
       a.warranty ? 'دارد' : 'ندارد', a.warrantyDate ? fmtJalali(a.warrantyDate) : '',
       (a.maintenance||[]).length,
+      a.photo ? 'دارد' : 'ندارد',
       a.location||'', a.custodian||'',
       a.disposed ? 'خارج شده' : 'فعال',
       a.disposed && a.disposal ? fmtJalali(a.disposal.date) : '',
@@ -1247,6 +1406,8 @@ document.getElementById('restoreFileInput').addEventListener('change', (e)=>{
         if(!Array.isArray(a.maintenance)) a.maintenance = [];
         if(typeof a.disposed === 'undefined') a.disposed = false;
         if(typeof a.disposal === 'undefined') a.disposal = null;
+        if(typeof a.photo === 'undefined') a.photo = null;
+    if(typeof a.vendor === 'undefined') a.vendor = '';
       });
       categories = data.categories || [...DEFAULT_CATEGORIES];
       nextSeq = data.nextSeq || (assets.length + 1);
