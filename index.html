@@ -228,10 +228,7 @@ tbody tr:hover{ background:#FAFAF7; }
     <div class="brand">
       <div class="brand-mark">رت</div>
       <div class="brand-text">
-        <div style="display:flex; align-items:center; gap:4px;">
-          <input id="companyName" value="رخ تجارت" spellcheck="false" readonly>
-          <button type="button" id="editNameBtn" title="ویرایش نام شرکت" style="background:transparent; border:none; color:#B9C3C6; cursor:pointer; font-size:13px; padding:4px; flex-shrink:0;">✎</button>
-        </div>
+        <input id="companyName" value="رخ تجارت" spellcheck="false" readonly tabindex="-1">
         <div class="brand-sub">دفتر ثبت دارایی‌های ثابت</div>
       </div>
     </div>
@@ -930,31 +927,6 @@ async function saveData(skipSync){
   }
   if(!skipSync) syncToServer();
 }
-
-document.getElementById('companyName').addEventListener('change', async (e)=>{
-  try{ await window.storage.set(NAME_KEY, e.target.value, false); }catch(err){}
-  syncToServer();
-});
-
-document.getElementById('editNameBtn').addEventListener('click', ()=>{
-  const input = document.getElementById('companyName');
-  const editing = !input.hasAttribute('readonly');
-  if(editing){
-    input.setAttribute('readonly', '');
-  } else {
-    input.removeAttribute('readonly');
-    input.focus();
-    input.select();
-  }
-});
-
-document.getElementById('companyName').addEventListener('blur', (e)=>{
-  e.target.setAttribute('readonly', '');
-});
-
-document.getElementById('companyName').addEventListener('keydown', (e)=>{
-  if(e.key === 'Enter'){ e.target.blur(); }
-});
 
 function bookValue(a){
   const cost = Number(a.cost)||0;
