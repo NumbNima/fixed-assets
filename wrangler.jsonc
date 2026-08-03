@@ -1,6 +1,17 @@
-"kv_namespaces": [
-  {
-    "binding": "FIXED_ASSETS_KV",
-    "id": "7e128a19740043c1ba013fbe412f76e4"
-  }
-]
+{
+  "name": "fixed-assets",
+  "main": "worker.js",
+  "compatibility_date": "2025-01-01",
+  "assets": {
+    "directory": "./",
+    "binding": "ASSETS",
+    "not_found_handling": "404-page",
+    "run_worker_first": true
+  },
+  "kv_namespaces": [
+    {
+      "binding": "FIXED_ASSETS_KV",
+      "id": "7e128a19740043c1ba013fbe412f76e4"
+    }
+  ]
+}
