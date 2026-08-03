@@ -67,6 +67,8 @@ body{
   font-family:'Vazirmatn',sans-serif; padding:2px 4px; border-radius:6px; width:230px;
 }
 .brand-text input:focus{ outline:1px solid rgba(255,255,255,.35); background:rgba(255,255,255,.06);}
+.brand-text input[readonly]{ cursor:default; }
+.brand-text input[readonly]:focus{ outline:none; background:transparent; }
 .brand-sub{ font-size:12px; color:#B9C3C6; margin-top:2px;}
 .header-actions{ display:flex; gap:10px; flex-wrap:wrap; }
 .btn{
@@ -226,12 +228,16 @@ tbody tr:hover{ background:#FAFAF7; }
     <div class="brand">
       <div class="brand-mark">رت</div>
       <div class="brand-text">
-        <input id="companyName" value="رخ تجارت" spellcheck="false">
+        <div style="display:flex; align-items:center; gap:4px;">
+          <input id="companyName" value="رخ تجارت" spellcheck="false" readonly>
+          <button type="button" id="editNameBtn" title="ویرایش نام شرکت" style="background:transparent; border:none; color:#B9C3C6; cursor:pointer; font-size:13px; padding:4px; flex-shrink:0;">✎</button>
+        </div>
         <div class="brand-sub">دفتر ثبت دارایی‌های ثابت</div>
       </div>
     </div>
     <div class="header-actions">
       <button class="btn btn-ghost" id="installBtn" style="display:none;">📲 نصب اپ</button>
+      <button class="btn btn-ghost" id="syncBtn">🔄 همگام‌سازی</button>
       <button class="btn btn-ghost" id="backupBtn">⬇ دانلود بک‌آپ</button>
       <button class="btn btn-ghost" id="restoreBtn">⬆ بازیابی بک‌آپ</button>
       <input type="file" id="restoreFileInput" accept="application/json" style="display:none;">
@@ -779,10 +785,78 @@ async function loadData(){
   setJalaliPicker('d_date', nowIso);
 
   render();
+
+  // بعد از نمایش فوری دیتای محلی، در پس‌زمینه با سرور سینک می‌کنیم
+  syncFromServer();
 }
 
-async function saveCategories(){
+/* ===================== سینک با سرور (Cloudflare KV) =====================
+   با این کار اطلاعات بین چند دستگاه که با همون یوزر/پس وارد شدن، مشترک می‌شه.
+   اگه دستگاه آفلاین باشه، این توابع بی‌سروصدا شکست می‌خورن و اپ با دیتای
+   محلی کار می‌کنه؛ خودشون تلاش نمی‌کنن دوباره وصل شن تا اکشن بعدی کاربر. */
+function normalizeAssetsArray(arr){
+  (arr||[]).forEach(a=>{
+    if(typeof a.warranty === 'undefined') a.warranty = false;
+    if(typeof a.warrantyDate === 'undefined') a.warrantyDate = null;
+    if(!Array.isArray(a.maintenance)) a.maintenance = [];
+    if(typeof a.disposed === 'undefined') a.disposed = false;
+    if(typeof a.disposal === 'undefined') a.disposal = null;
+    if(typeof a.photo === 'undefined') a.photo = null;
+    if(typeof a.vendor === 'undefined') a.vendor = '';
+  });
+  return arr || [];
+}
+
+let syncInFlight = false;
+
+async function syncToServer(){
+  try{
+    const payload = {
+      assets,
+      nextSeq,
+      categories,
+      companyName: document.getElementById('companyName').value,
+      syncedAt: Date.now(),
+    };
+    await fetch('/api/data', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+  }catch(e){ /* آفلاین یا خطای شبکه؛ بی‌سروصدا رد می‌شیم */ }
+}
+
+async function syncFromServer(){
+  if(syncInFlight) return;
+  syncInFlight = true;
+  try{
+    const res = await fetch('/api/data');
+    if(!res.ok) return;
+    const remote = await res.json();
+    if(!remote){
+      // سرور هنوز چیزی نداره -> دیتای محلی رو اولین بار می‌فرستیم بالا
+      await syncToServer();
+      return;
+    }
+    assets = normalizeAssetsArray(remote.assets || []);
+    nextSeq = remote.nextSeq || (assets.length + 1);
+    categories = remote.categories && remote.categories.length ? remote.categories : categories;
+    if(remote.companyName){ document.getElementById('companyName').value = remote.companyName; }
+
+    // کش محلی رو هم به‌روز می‌کنیم تا حالت آفلاین بعدی هم تازه باشه
+    await saveData(true);
+    await saveCategories(true);
+    try{ await window.storage.set(NAME_KEY, document.getElementById('companyName').value, false); }catch(e){}
+
+    populateCategorySelect();
+    render();
+  }catch(e){ /* آفلاین یا خطای شبکه؛ با دیتای محلی ادامه می‌دیم */ }
+  finally{ syncInFlight = false; }
+}
+
+async function saveCategories(skipSync){
   try{ await window.storage.set(CATEGORIES_KEY, JSON.stringify(categories), false); }catch(e){ console.error('storage error', e); }
+  if(!skipSync) syncToServer();
 }
 
 function populateCategorySelect(){
@@ -847,17 +921,39 @@ document.getElementById('newCatInput').addEventListener('keydown', (e)=>{
   if(e.key==='Enter'){ document.getElementById('addCatBtn').click(); }
 });
 
-async function saveData(){
+async function saveData(skipSync){
   try{
     await window.storage.set(STORAGE_KEY, JSON.stringify({items: assets, nextSeq}), false);
   }catch(e){
     console.error('storage error', e);
     alert('ذخیره‌سازی انجام نشد؛ احتمالاً حافظه‌ی دستگاه پر شده (معمولاً به‌خاطر تعداد زیاد عکس). یک بک‌آپ بگیرید و چند عکس قدیمی را حذف کنید.');
   }
+  if(!skipSync) syncToServer();
 }
 
 document.getElementById('companyName').addEventListener('change', async (e)=>{
   try{ await window.storage.set(NAME_KEY, e.target.value, false); }catch(err){}
+  syncToServer();
+});
+
+document.getElementById('editNameBtn').addEventListener('click', ()=>{
+  const input = document.getElementById('companyName');
+  const editing = !input.hasAttribute('readonly');
+  if(editing){
+    input.setAttribute('readonly', '');
+  } else {
+    input.removeAttribute('readonly');
+    input.focus();
+    input.select();
+  }
+});
+
+document.getElementById('companyName').addEventListener('blur', (e)=>{
+  e.target.setAttribute('readonly', '');
+});
+
+document.getElementById('companyName').addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter'){ e.target.blur(); }
 });
 
 function bookValue(a){
@@ -1360,6 +1456,16 @@ document.getElementById('installBtn').addEventListener('click', async ()=>{
   await deferredInstallPrompt.userChoice;
   deferredInstallPrompt = null;
   document.getElementById('installBtn').style.display = 'none';
+});
+
+document.getElementById('syncBtn').addEventListener('click', async ()=>{
+  const btn = document.getElementById('syncBtn');
+  const original = btn.textContent;
+  btn.textContent = '🔄 در حال همگام‌سازی...';
+  btn.disabled = true;
+  await syncFromServer();
+  btn.textContent = original;
+  btn.disabled = false;
 });
 
 document.getElementById('backupBtn').addEventListener('click', ()=>{
